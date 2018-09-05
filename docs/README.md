@@ -30,7 +30,7 @@ The attention mechanism tells a Neural Machine Translation model where it should
 
 ### 2.1 - Attention mechanism
 
-We will implement the attention mechanism presented in the lecture videos. Here is a figure to remind you how the model works. The diagram on the left shows the attention model. The diagram on the right shows what one "Attention" step does to calculate the attention variables $\alpha^{\langle t, t' \rangle}$, which are used to compute the context variable $context^{\langle t \rangle}$ for each time-step in the output ($t=1, \ldots, T_y$). 
+We will implement the attention mechanism presented in the lecture videos. Here is a figure to remind you how the model works. The diagram on the left shows the attention model. The diagram on the right shows what one "Attention" step does to calculate the attention variables ![alpaha](http://latex.codecogs.com/gif.latex?%5Calpha%5E%7B%5Clangle%20t%2C%20t%27%20%5Crangle%7D), which are used to compute the context variable ![context](http://latex.codecogs.com/gif.latex?context%5E%7B%5Clangle%20t%20%5Crangle%7D) for each time-step in the output (![t](http://latex.codecogs.com/gif.latex?%24t%3D1%2C%20%5Cldots%2C%20T_y%24)). 
 
 <table>
 <td> 
