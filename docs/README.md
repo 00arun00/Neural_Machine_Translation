@@ -34,10 +34,10 @@ We will implement the attention mechanism presented in the lecture videos. Here 
 
 <table>
 <td> 
-<img src="/home/arun/nlp/course5/work/Week 3/Machine Translation/images/attn_model.png" style="width:500;height:500px;"> <br>
+<img src="../images/attn_model.png" style="width:500;height:500px;"> <br>
 </td> 
 <td> 
-<img src="/home/arun/nlp/course5/work/Week 3/Machine Translation/images/attn_mechanism.png" style="width:500;height:500px;"> <br>
+<img src="../images/attn_mechanism.png" style="width:500;height:500px;"> <br>
 </td> 
 </table>
 <caption><center> **Figure 1**: Neural machine translation with attention</center></caption>
@@ -99,7 +99,7 @@ The last step is to define all your inputs and outputs to fit the model:
 
 While training you can see the loss as well as the accuracy on each of the 10 positions of the output. The table below gives you an example of what the accuracies could be if the batch had 2 examples: 
 
-<img src="images/table.png" style="width:700;height:200px;"> <br>
+<img src="../images/table.png" style="width:700;height:200px;"> <br>
 <caption><center>Thus, `dense_2_acc_8: 0.89` means that you are predicting the 7th character of the output correctly 89% of the time in the current batch of data. </center></caption>
 
 We have run this model for longer, and saved the weights. Run the next cell to load our weights. (By training a model for several minutes, you should be able to obtain a model of similar accuracy, but loading our model will save you time.) 
