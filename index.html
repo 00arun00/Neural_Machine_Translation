@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>Neural Machine Translation | Neural_Machine_Translation</title>
+<meta name="generator" content="Jekyll v3.7.3.1" />
+<meta property="og:title" content="Neural Machine Translation" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="This project focuses on building a Neural Machine Translation (NMT) model to translate human readable dates (“25th of June, 2009”) into machine readable dates (“2009-06-25”), using attention model." />
+<meta property="og:description" content="This project focuses on building a Neural Machine Translation (NMT) model to translate human readable dates (“25th of June, 2009”) into machine readable dates (“2009-06-25”), using attention model." />
+<link rel="canonical" href="https://00arun00.github.io/Neural_Machine_Translation/" />
+<meta property="og:url" content="https://00arun00.github.io/Neural_Machine_Translation/" />
+<meta property="og:site_name" content="Neural_Machine_Translation" />
+<script type="application/ld+json">
+{"@type":"WebSite","headline":"Neural Machine Translation","url":"https://00arun00.github.io/Neural_Machine_Translation/","name":"Neural_Machine_Translation","description":"This project focuses on building a Neural Machine Translation (NMT) model to translate human readable dates (“25th of June, 2009”) into machine readable dates (“2009-06-25”), using attention model.","@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/Neural_Machine_Translation/assets/css/style.css?v=894171ecadc58ead5412cf18dd124608807f1ca2">
+    <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1><a href="https://00arun00.github.io/Neural_Machine_Translation/">Neural_Machine_Translation</a></h1>
+        
+        
+
+        <p>This project focuses on building a Neural Machine Translation (NMT) model to translate human readable dates ("25th of June, 2009") into machine readable dates ("2009-06-25"), using  attention model.</p>
+
+        
+        <p class="view"><a href="https://github.com/00arun00/Neural_Machine_Translation">View the Project on GitHub <small>00arun00/Neural_Machine_Translation</small></a></p>
+        
+
+        
+
+        
+      </header>
+      <section>
+
+      <h1 id="neural-machine-translation">Neural Machine Translation</h1>
+
+<p>This project focuses on building a Neural Machine Translation (NMT) model to translate human readable dates (“25th of June, 2009”) into machine readable dates (“2009-06-25”), using  attention model.</p>
+
+<h1 id="steps">Steps</h1>
+
+<h2 id="1---translating-human-readable-dates-into-machine-readable-dates">1 - Translating human readable dates into machine readable dates</h2>
+
+<p>Attention models can be used to translate from one language to another, such as translating from English to Hindi. However, language translation requires massive datasets and usually takes days of training on GPUs. This project focuses on getting the concepts required instead and hence we will use a simpler “date translation” task.</p>
+
+<p>The network will input a date written in a variety of possible formats (<em>e.g. “the 29th of August 1958”, “03/30/1968”, “24 JUNE 1987”</em>) and translate them into standardized, machine readable dates (<em>e.g. “1958-08-29”, “1968-03-30”, “1987-06-24”</em>). We will have the network learn to output dates in the common machine-readable format YYYY-MM-DD.</p>
+
+<h3 id="11---dataset">1.1 - Dataset</h3>
+
+<p>The model here is trained on a dataset of 10000 human readable dates and their equivalent, standardized, machine readable dates. Data is preprocessed. Next  a map of the raw text data into the index values is created. Here we use Tx=30 (which we assume is the maximum length of the human readable date; if we get a longer input, we would have to truncate it) and Ty=10 (since “YYYY-MM-DD” is 10 characters long).</p>
+
+<p>After Preprocessing our dataset is of the following format:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">X</code>: a processed version of the human readable dates in the training set, where each character is replaced by an index mapped to the character via <code class="highlighter-rouge">human_vocab</code>. Each date is further padded to $T_x$ values with a special character (&lt; pad &gt;). <code class="highlighter-rouge">X.shape = (m, Tx)</code></li>
+  <li><code class="highlighter-rouge">Y</code>: a processed version of the machine readable dates in the training set, where each character is replaced by the index it is mapped to in <code class="highlighter-rouge">machine_vocab</code>. You should have <code class="highlighter-rouge">Y.shape = (m, Ty)</code>.</li>
+  <li><code class="highlighter-rouge">Xoh</code>: one-hot version of <code class="highlighter-rouge">X</code>, the “1” entry’s index is mapped to the character thanks to <code class="highlighter-rouge">human_vocab</code>. <code class="highlighter-rouge">Xoh.shape = (m, Tx, len(human_vocab))</code></li>
+  <li><code class="highlighter-rouge">Yoh</code>: one-hot version of <code class="highlighter-rouge">Y</code>, the “1” entry’s index is mapped to the character thanks to <code class="highlighter-rouge">machine_vocab</code>. <code class="highlighter-rouge">Yoh.shape = (m, Tx, len(machine_vocab))</code>. Here, <code class="highlighter-rouge">len(machine_vocab) = 11</code> since there are 11 characters (‘-‘ as well as 0-9).</li>
+</ul>
+
+<h2 id="2---neural-machine-translation-with-attention">2 - Neural machine translation with attention</h2>
+
+<p>While translating a book’s paragraph from French to English, we would not read the whole paragraph, then close the book and translate. Even during the translation process, we would read/re-read and focus on the parts of the French paragraph corresponding to the parts of the English we are writing down.</p>
+
+<p>The attention mechanism tells a Neural Machine Translation model where it should pay attention to at any step.</p>
+
+<h3 id="21---attention-mechanism">2.1 - Attention mechanism</h3>
+
+<p>We will implement the attention mechanism presented in the lecture videos. Here is a figure to remind you how the model works. The diagram on the left shows the attention model. The diagram on the right shows what one “Attention” step does to calculate the attention variables $\alpha^{\langle t, t’ \rangle}$, which are used to compute the context variable $context^{\langle t \rangle}$ for each time-step in the output ($t=1, \ldots, T_y$).</p>
+
+<table>
+<td> 
+<img src="../images/attn_model.png" style="width:500;height:500px;" /> <br />
+</td> 
+<td> 
+<img src="../images/attn_mechanism.png" style="width:500;height:500px;" /> <br />
+</td> 
+</table>
+<caption><center> **Figure 1**: Neural machine translation with attention</center></caption>
+
+<p>Here are some properties of the model that you may notice:</p>
+
+<ul>
+  <li>
+    <p>There are two separate LSTMs in this model (see diagram on the left). Because the one at the bottom of the picture is a Bi-directional LSTM and comes <em>before</em> the attention mechanism, we will call it <em>pre-attention</em> Bi-LSTM. The LSTM at the top of the diagram comes <em>after</em> the attention mechanism, so we will call it the <em>post-attention</em> LSTM. The pre-attention Bi-LSTM goes through $T_x$ time steps; the post-attention LSTM goes through $T_y$ time steps.</p>
+  </li>
+  <li>
+    <p>The post-attention LSTM passes $s^{\langle t \rangle}, c^{\langle t \rangle}$ from one time step to the next. In the lecture videos, we were using only a basic RNN for the post-activation sequence model, so the state captured by the RNN output activations $s^{\langle t\rangle}$. But since we are using an LSTM here, the LSTM has both the output activation $s^{\langle t\rangle}$ and the hidden cell state $c^{\langle t\rangle}$. However, unlike previous text generation examples (such as Dinosaurus in week 1), in this model the post-activation LSTM at time $t$ does will not take the specific generated $y^{\langle t-1 \rangle}$ as input; it only takes $s^{\langle t\rangle}$ and $c^{\langle t\rangle}$ as input. We have designed the model this way, because (unlike language generation where adjacent characters are highly correlated) there isn’t as strong a dependency between the previous character and the next character in a YYYY-MM-DD date.</p>
+  </li>
+  <li>
+    <p>We use $a^{\langle t \rangle} = [\overrightarrow{a}^{\langle t \rangle}; \overleftarrow{a}^{\langle t \rangle}]$ to represent the concatenation of the activations of both the forward-direction and backward-directions of the pre-attention Bi-LSTM.</p>
+  </li>
+  <li>
+    <p>The diagram on the right uses a <code class="highlighter-rouge">RepeatVector</code> node to copy $s^{\langle t-1 \rangle}$’s value $T_x$ times, and then <code class="highlighter-rouge">Concatenation</code> to concatenate $s^{\langle t-1 \rangle}$ and $a^{\langle t \rangle}$ to compute $e^{\langle t, t’}$, which is then passed through a softmax to compute $\alpha^{\langle t, t’ \rangle}$. We’ll explain how to use <code class="highlighter-rouge">RepeatVector</code> and <code class="highlighter-rouge">Concatenation</code> in Keras below.</p>
+  </li>
+</ul>
+
+<p>Lets implement this model. You will start by implementing two functions: <code class="highlighter-rouge">one_step_attention()</code> and <code class="highlighter-rouge">model()</code>.</p>
+
+<p><strong>1) <code class="highlighter-rouge">one_step_attention()</code></strong>: At step $t$, given all the hidden states of the Bi-LSTM ($[a^{&lt;1&gt;},a^{&lt;2&gt;}, …, a^{<T_x>}]$) and the previous hidden state of the second LSTM ($s^{<t-1>}$), `one_step_attention()` will compute the attention weights ($[\alpha^{&lt;t,1&gt;},\alpha^{&lt;t,2&gt;}, ..., \alpha^{&lt;t,T_x&gt;}]$) and output the context vector (see Figure  1 (right) for details):
+$$context^{<t>} = \sum_{t' = 0}^{T_x} \alpha^{&lt;t,t'&gt;}a^{&lt;t'&gt;}\tag{1}$$</t></t-1></T_x></p>
+
+<p>Note that we are denoting the attention in this notebook $context^{\langle t \rangle}$. In the lecture videos, the context was denoted $c^{\langle t \rangle}$, but here we are calling it $context^{\langle t \rangle}$ to avoid confusion with the (post-attention) LSTM’s internal memory cell variable, which is sometimes also denoted $c^{\langle t \rangle}$.</p>
+
+<p><strong>2) <code class="highlighter-rouge">model()</code></strong>: Implements the entire model. It first runs the input through a Bi-LSTM to get back $[a^{&lt;1&gt;},a^{&lt;2&gt;}, …, a^{<T_x>}]$. Then, it calls `one_step_attention()` $T_y$ times (`for` loop). At each iteration of this loop, it gives the computed context vector $c^{<t>}$ to the second LSTM, and runs the output of the LSTM through a dense layer with softmax activation to generate a prediction $\hat{y}^{<t>}$.</t></t></T_x></p>
+
+<p><strong>Exercise</strong>: Implement <code class="highlighter-rouge">one_step_attention()</code>. The function <code class="highlighter-rouge">model()</code> will call the layers in <code class="highlighter-rouge">one_step_attention()</code> $T_y$ using a for-loop, and it is important that all $T_y$ copies have the same weights. I.e., it should not re-initiaiize the weights every time. In other words, all $T_y$ steps should have shared weights. Here’s how you can implement layers with shareable weights in Keras:</p>
+<ol>
+  <li>Define the layer objects (as global variables for examples).</li>
+  <li>Call these objects when propagating the input.</li>
+</ol>
+
+<p>We have defined the layers you need as global variables. Please run the following cells to create them. Please check the Keras documentation to make sure you understand what these layers are: <a href="https://keras.io/layers/core/#repeatvector">RepeatVector()</a>, <a href="https://keras.io/layers/merge/#concatenate">Concatenate()</a>, <a href="https://keras.io/layers/core/#dense">Dense()</a>, <a href="https://keras.io/layers/core/#activation">Activation()</a>, <a href="https://keras.io/layers/merge/#dot">Dot()</a>.</p>
+
+<p>Now you can use these layers to implement <code class="highlighter-rouge">one_step_attention()</code>. In order to propagate a Keras tensor object X through one of these layers, use <code class="highlighter-rouge">layer(X)</code> (or <code class="highlighter-rouge">layer([X,Y])</code> if it requires multiple inputs.), e.g. <code class="highlighter-rouge">densor(X)</code> will propagate X through the <code class="highlighter-rouge">Dense(1)</code> layer defined above.</p>
+
+<p>You will be able to check the expected output of <code class="highlighter-rouge">one_step_attention()</code> after you’ve coded the <code class="highlighter-rouge">model()</code> function.</p>
+
+<p><strong>Exercise</strong>: Implement <code class="highlighter-rouge">model()</code> as explained in figure 2 and the text above. Again, we have defined global layers that will share weights to be used in <code class="highlighter-rouge">model()</code>.</p>
+
+<p>Now you can use these layers $T_y$ times in a <code class="highlighter-rouge">for</code> loop to generate the outputs, and their parameters will not be reinitialized. You will have to carry out the following steps:</p>
+
+<ol>
+  <li>Propagate the input into a <a href="https://keras.io/layers/wrappers/#bidirectional">Bidirectional</a> <a href="https://keras.io/layers/recurrent/#lstm">LSTM</a></li>
+  <li>Iterate for $t = 0, \dots, T_y-1$:
+    <ol>
+      <li>Call <code class="highlighter-rouge">one_step_attention()</code> on $[\alpha^{&lt;t,1&gt;},\alpha^{&lt;t,2&gt;}, …, \alpha^{&lt;t,T_x&gt;}]$ and $s^{<t-1>}$ to get the context vector $context^{<t>}$.</t></t-1></li>
+      <li>Give $context^{<t>}$ to the post-attention LSTM cell. Remember pass in the previous hidden-state $s^{\langle t-1\rangle}$ and cell-states $c^{\langle t-1\rangle}$ of this LSTM using `initial_state= [previous hidden state, previous cell state]`. Get back the new hidden state $s^{<t>}$ and the new cell state $c^{<t>}$.</t></t></t></li>
+      <li>Apply a softmax layer to $s^{<t>}$, get the output.</t></li>
+      <li>Save the output by adding it to the list of outputs.</li>
+    </ol>
+  </li>
+  <li>Create your Keras model instance, it should have three inputs (“inputs”, $s^{&lt;0&gt;}$ and $c^{&lt;0&gt;}$) and output the list of “outputs”.</li>
+</ol>
+
+<p>As usual, after creating your model in Keras, you need to compile it and define what loss, optimizer and metrics your are want to use. Compile your model using <code class="highlighter-rouge">categorical_crossentropy</code> loss, a custom <a href="https://keras.io/optimizers/#adam">Adam</a> <a href="https://keras.io/optimizers/#usage-of-optimizers">optimizer</a> (<code class="highlighter-rouge">learning rate = 0.005</code>, $\beta_1 = 0.9$, $\beta_2 = 0.999$, <code class="highlighter-rouge">decay = 0.01</code>)  and <code class="highlighter-rouge">['accuracy']</code> metrics:</p>
+
+<p>The last step is to define all your inputs and outputs to fit the model:</p>
+
+<ul>
+  <li>You already have X of shape $(m = 10000, T_x = 30)$ containing the training examples.</li>
+  <li>You need to create <code class="highlighter-rouge">s0</code> and <code class="highlighter-rouge">c0</code> to initialize your <code class="highlighter-rouge">post_activation_LSTM_cell</code> with 0s.</li>
+  <li>Given the <code class="highlighter-rouge">model()</code> you coded, you need the “outputs” to be a list of 11 elements of shape (m, T_y). So that: <code class="highlighter-rouge">outputs[i][0], ..., outputs[i][Ty]</code> represent the true labels (characters) corresponding to the $i^{th}$ training example (<code class="highlighter-rouge">X[i]</code>). More generally, <code class="highlighter-rouge">outputs[i][j]</code> is the true label of the $j^{th}$ character in the $i^{th}$ training example.</li>
+</ul>
+
+<p>While training you can see the loss as well as the accuracy on each of the 10 positions of the output. The table below gives you an example of what the accuracies could be if the batch had 2 examples:</p>
+
+<p><img src="../images/table.png" style="width:700;height:200px;" /> <br /></p>
+<caption><center>Thus, `dense_2_acc_8: 0.89` means that you are predicting the 7th character of the output correctly 89% of the time in the current batch of data. </center></caption>
+
+<p>We have run this model for longer, and saved the weights. Run the next cell to load our weights. (By training a model for several minutes, you should be able to obtain a model of similar accuracy, but loading our model will save you time.)</p>
+
+
+
+      </section>
+      <footer>
+        
+        <p>This project is maintained by <a href="https://github.com/00arun00">00arun00</a></p>
+        
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="/Neural_Machine_Translation/assets/js/scale.fix.js"></script>
+    
+  </body>
+</html>
