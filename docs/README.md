@@ -85,7 +85,7 @@ output: 2001-03-03
 source: 1 March 2001
 output: 2001-03-01
 ```
-Accuracies
+Accuracy
 ```
  'dense_3_acc_1': [1.0],
  'dense_3_acc_10': [0.99970000028610229],
