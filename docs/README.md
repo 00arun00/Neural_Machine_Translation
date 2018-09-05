@@ -30,7 +30,7 @@ The attention mechanism tells a Neural Machine Translation model where it should
 
 ### 2.1 - Attention mechanism
 
-Here is a figure that describes how the model works. The diagram on the left shows the attention model. The diagram on the right shows what one "Attention" step does to calculate the attention variables ![alpaha](http://latex.codecogs.com/gif.latex?%5Calpha%5E%7B%5Clangle%20t%2C%20t%27%20%5Crangle%7D), which are used to compute the context variable ![context](http://latex.codecogs.com/gif.latex?context%5E%7B%5Clangle%20t%20%5Crangle%7D) for each time-step in the output (![t](http://latex.codecogs.com/gif.latex?%24t%3D1%2C%20%5Cldots%2C%20T_y%24)).
+Here is a figure that describes how the model works. The diagram on the left shows the attention model. The diagram on the right shows what one "Attention" step does to calculate the attention variables ![alpaha](http://latex.codecogs.com/gif.latex?%5Calpha%5E%7B%5Clangle%20t%2C%20t%27%20%5Crangle%7D), which are used to compute the context variable ![context](http://latex.codecogs.com/gif.latex?context%5E%7B%5Clangle%20t%20%5Crangle%7D) for each time-step in the output ![t](http://latex.codecogs.com/gif.latex?%24t%3D1%2C%20%5Cldots%2C%20T_y%24).
 
 <table>
 <td>
@@ -52,7 +52,7 @@ Here are some properties of the model:
 
 - The diagram on the right uses a `RepeatVector` node to copy ![s_t-1](http://latex.codecogs.com/gif.latex?%24s%5E%7B%5Clangle%20t-1%20%5Crangle%7D%24)'s value ![T_x](http://latex.codecogs.com/gif.latex?%24T_x%24) times, and then `Concatenation` to concatenate ![s_t-1](http://latex.codecogs.com/gif.latex?%24s%5E%7B%5Clangle%20t-1%20%5Crangle%7D%24) and ![a_t](http://latex.codecogs.com/gif.latex?%24a%5E%7B%5Clangle%20t%20%5Crangle%7D%24) to compute ![e_t](http://latex.codecogs.com/gif.latex?%24e%5E%7B%5Clangle%20t%2C%20t%27%5Crangle%7D%24), which is then passed through a softmax to compute ![alpha_t_t](http://latex.codecogs.com/gif.latex?%24%5Calpha%5E%7B%5Clangle%20t%2C%20t%27%20%5Crangle%7D%24). We'll explain how to use `RepeatVector` and `Concatenation` in Keras below.
 
-**1) `one_step_attention()`**: At step ![t](http://latex.codecogs.com/gif.latex?%24t%24), given all the hidden states of the Bi-LSTM (![a_ts](http://latex.codecogs.com/gif.latex?%24%5Ba%5E%7B%3C1%3E%7D%2Ca%5E%7B%3C2%3E%7D%2C%20...%2C%20a%5E%7B%3CT_x%3E%7D%5D%24)) and the previous hidden state of the second LSTM (![s_t-1](http://latex.codecogs.com/gif.latex?%24s%5E%7B%3Ct-1%3E%7D%24)), `one_step_attention()` will compute the attention weights (![alphas](http://latex.codecogs.com/gif.latex?%24%5B%5Calpha%5E%7B%3Ct%2C1%3E%7D%2C%5Calpha%5E%7B%3Ct%2C2%3E%7D%2C%20...%2C%20%5Calpha%5E%7B%3Ct%2CT_x%3E%7D%5D%24)) and output the context vector (see Figure  1 (right) for details):
+**1) `one_step_attention()`**: At step ![t](http://latex.codecogs.com/gif.latex?%24t%24), given all the hidden states of the Bi-LSTM ![a_ts](http://latex.codecogs.com/gif.latex?%24%5Ba%5E%7B%3C1%3E%7D%2Ca%5E%7B%3C2%3E%7D%2C%20...%2C%20a%5E%7B%3CT_x%3E%7D%5D%24) and the previous hidden state of the second LSTM (![s_t-1](http://latex.codecogs.com/gif.latex?%24s%5E%7B%3Ct-1%3E%7D%24)), `one_step_attention()` will compute the attention weights ![alphas](http://latex.codecogs.com/gif.latex?%24%5B%5Calpha%5E%7B%3Ct%2C1%3E%7D%2C%5Calpha%5E%7B%3Ct%2C2%3E%7D%2C%20...%2C%20%5Calpha%5E%7B%3Ct%2CT_x%3E%7D%5D%24) and output the context vector (see Figure  1 (right) for details):   
 ![eq1](http://latex.codecogs.com/gif.latex?%24%24context%5E%7B%3Ct%3E%7D%20%3D%20%5Csum_%7Bt%27%20%3D%200%7D%5E%7BT_x%7D%20%5Calpha%5E%7B%3Ct%2Ct%27%3E%7Da%5E%7B%3Ct%27%3E%7D%5Ctag%7B1%7D%24%24)
 
 **2) `model()`**: Implements the entire model. It first runs the input through a Bi-LSTM to get back ![ats](http://latex.codecogs.com/gif.latex?%24%5Ba%5E%7B%3C1%3E%7D%2Ca%5E%7B%3C2%3E%7D%2C%20...%2C%20a%5E%7B%3CT_x%3E%7D%5D%24). Then, it calls `one_step_attention()` ![ty](http://latex.codecogs.com/gif.latex?%24T_y%24) times (`for` loop). At each iteration of this loop, it gives the computed context vector ![ct](http://latex.codecogs.com/gif.latex?%24c%5E%7B%3Ct%3E%7D%24) to the second LSTM, and runs the output of the LSTM through a dense layer with softmax activation to generate a prediction ![y_hat_t](http://latex.codecogs.com/gif.latex?%5Chat%7By%7D%5E%7B%3Ct%3E%7D).
@@ -66,7 +66,7 @@ While training you can see the loss as well as the accuracy on each of the 10 po
 
 
 ### Results
-
+Sample translations
 ```
 source: 3 May 1979
 output: 1979-05-03
@@ -85,7 +85,7 @@ output: 2001-03-03
 source: 1 March 2001
 output: 2001-03-01
 ```
-
+Accuracies
 ```
  'dense_3_acc_1': [1.0],
  'dense_3_acc_10': [0.99970000028610229],
@@ -97,6 +97,9 @@ output: 2001-03-01
  'dense_3_acc_7': [0.99980000019073489],
  'dense_3_acc_8': [1.0],
  'dense_3_acc_9': [0.99620000362396244],
+```
+Losses
+```
  'dense_3_loss_1': [0.0014263137261150405],
  'dense_3_loss_10': [0.002527753144968301],
  'dense_3_loss_2': [0.00033948474334465572],
@@ -109,4 +112,3 @@ output: 2001-03-01
  'dense_3_loss_9': [0.019907007873989642],
  'loss': [0.039684777855873106]
 ```
-
