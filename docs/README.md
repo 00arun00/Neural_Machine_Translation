@@ -30,7 +30,7 @@ The attention mechanism tells a Neural Machine Translation model where it should
 
 ### 2.1 - Attention mechanism
 
-We will implement the attention mechanism presented in the lecture videos. Here is a figure to remind you how the model works. The diagram on the left shows the attention model. The diagram on the right shows what one "Attention" step does to calculate the attention variables ![alpaha](http://latex.codecogs.com/gif.latex?%5Calpha%5E%7B%5Clangle%20t%2C%20t%27%20%5Crangle%7D), which are used to compute the context variable ![context](http://latex.codecogs.com/gif.latex?context%5E%7B%5Clangle%20t%20%5Crangle%7D) for each time-step in the output (![t](http://latex.codecogs.com/gif.latex?%24t%3D1%2C%20%5Cldots%2C%20T_y%24)).
+Here is a figure that describes how the model works. The diagram on the left shows the attention model. The diagram on the right shows what one "Attention" step does to calculate the attention variables ![alpaha](http://latex.codecogs.com/gif.latex?%5Calpha%5E%7B%5Clangle%20t%2C%20t%27%20%5Crangle%7D), which are used to compute the context variable ![context](http://latex.codecogs.com/gif.latex?context%5E%7B%5Clangle%20t%20%5Crangle%7D) for each time-step in the output (![t](http://latex.codecogs.com/gif.latex?%24t%3D1%2C%20%5Cldots%2C%20T_y%24)).
 
 <table>
 <td>
@@ -44,62 +44,69 @@ We will implement the attention mechanism presented in the lecture videos. Here 
 
 
 
-Here are some properties of the model that you may notice:
+Here are some properties of the model:
 
 - There are two separate LSTMs in this model (see diagram on the left). Because the one at the bottom of the picture is a Bi-directional LSTM and comes *before* the attention mechanism, we will call it *pre-attention* Bi-LSTM. The LSTM at the top of the diagram comes *after* the attention mechanism, so we will call it the *post-attention* LSTM. The pre-attention Bi-LSTM goes through ![Tx](http://latex.codecogs.com/gif.latex?T_x) time steps; the post-attention LSTM goes through ![Ty](http://latex.codecogs.com/gif.latex?T_y) time steps.
-
-- The post-attention LSTM passes ![sc](http://latex.codecogs.com/gif.latex?s%5E%7B%5Clangle%20t%20%5Crangle%7D%2C%20c%5E%7B%5Clangle%20t%20%5Crangle%7D) from one time step to the next. In the lecture videos, we were using only a basic RNN for the post-activation sequence model, so the state captured by the RNN output activations ![s](http://latex.codecogs.com/gif.latex?s%5E%7B%5Clangle%20t%5Crangle%7D). But since we are using an LSTM here, the LSTM has both the output activation ![s](http://latex.codecogs.com/gif.latex?s%5E%7B%5Clangle%20t%5Crangle%7D) and the hidden cell state ![ct](http://latex.codecogs.com/gif.latex?%24c%5E%7B%5Clangle%20t%5Crangle%7D%24). However, unlike previous text generation examples (such as Dinosaurus in week 1), in this model the post-activation LSTM at time ![t](http://latex.codecogs.com/gif.latex?%24t%24) does will not take the specific generated ![aba](http://latex.codecogs.com/gif.latex?%24y%5E%7B%5Clangle%20t-1%20%5Crangle%7D%24) as input; it only takes ![s_t](http://latex.codecogs.com/gif.latex?%24s%5E%7B%5Clangle%20t%5Crangle%7D%24) and ![c_t](http://latex.codecogs.com/gif.latex?%24c%5E%7B%5Clangle%20t%5Crangle%7D%24) as input. We have designed the model this way, because (unlike language generation where adjacent characters are highly correlated) there isn't as strong a dependency between the previous character and the next character in a YYYY-MM-DD date.
 
 - We use ![bia](http://latex.codecogs.com/gif.latex?a%5E%7B%5Clangle%20t%20%5Crangle%7D%20%3D%20%5B%5Coverrightarrow%7Ba%7D%5E%7B%5Clangle%20t%20%5Crangle%7D%3B%20%5Coverleftarrow%7Ba%7D%5E%7B%5Clangle%20t%20%5Crangle%7D%5D) to represent the concatenation of the activations of both the forward-direction and backward-directions of the pre-attention Bi-LSTM.
 
 - The diagram on the right uses a `RepeatVector` node to copy ![s_t-1](http://latex.codecogs.com/gif.latex?%24s%5E%7B%5Clangle%20t-1%20%5Crangle%7D%24)'s value ![T_x](http://latex.codecogs.com/gif.latex?%24T_x%24) times, and then `Concatenation` to concatenate ![s_t-1](http://latex.codecogs.com/gif.latex?%24s%5E%7B%5Clangle%20t-1%20%5Crangle%7D%24) and ![a_t](http://latex.codecogs.com/gif.latex?%24a%5E%7B%5Clangle%20t%20%5Crangle%7D%24) to compute ![e_t](http://latex.codecogs.com/gif.latex?%24e%5E%7B%5Clangle%20t%2C%20t%27%5Crangle%7D%24), which is then passed through a softmax to compute ![alpha_t_t](http://latex.codecogs.com/gif.latex?%24%5Calpha%5E%7B%5Clangle%20t%2C%20t%27%20%5Crangle%7D%24). We'll explain how to use `RepeatVector` and `Concatenation` in Keras below.
 
-Lets implement this model. You will start by implementing two functions: `one_step_attention()` and `model()`.
-
 **1) `one_step_attention()`**: At step ![t](http://latex.codecogs.com/gif.latex?%24t%24), given all the hidden states of the Bi-LSTM (![a_ts](http://latex.codecogs.com/gif.latex?%24%5Ba%5E%7B%3C1%3E%7D%2Ca%5E%7B%3C2%3E%7D%2C%20...%2C%20a%5E%7B%3CT_x%3E%7D%5D%24)) and the previous hidden state of the second LSTM (![s_t-1](http://latex.codecogs.com/gif.latex?%24s%5E%7B%3Ct-1%3E%7D%24)), `one_step_attention()` will compute the attention weights (![alphas](http://latex.codecogs.com/gif.latex?%24%5B%5Calpha%5E%7B%3Ct%2C1%3E%7D%2C%5Calpha%5E%7B%3Ct%2C2%3E%7D%2C%20...%2C%20%5Calpha%5E%7B%3Ct%2CT_x%3E%7D%5D%24)) and output the context vector (see Figure  1 (right) for details):
 ![eq1](http://latex.codecogs.com/gif.latex?%24%24context%5E%7B%3Ct%3E%7D%20%3D%20%5Csum_%7Bt%27%20%3D%200%7D%5E%7BT_x%7D%20%5Calpha%5E%7B%3Ct%2Ct%27%3E%7Da%5E%7B%3Ct%27%3E%7D%5Ctag%7B1%7D%24%24)
 
-Note that we are denoting the attention in this notebook ![context](http://latex.codecogs.com/gif.latex?%24context%5E%7B%5Clangle%20t%20%5Crangle%7D%24). In the lecture videos, the context was denoted ![context](http://latex.codecogs.com/gif.latex?%24c%5E%7B%5Clangle%20t%20%5Crangle%7D%24), but here we are calling it ![context](http://latex.codecogs.com/gif.latex?%24context%5E%7B%5Clangle%20t%20%5Crangle%7D%24) to avoid confusion with the (post-attention) LSTM's internal memory cell variable, which is sometimes also denoted ![context](http://latex.codecogs.com/gif.latex?%24c%5E%7B%5Clangle%20t%20%5Crangle%7D%24).
-
 **2) `model()`**: Implements the entire model. It first runs the input through a Bi-LSTM to get back ![ats](http://latex.codecogs.com/gif.latex?%24%5Ba%5E%7B%3C1%3E%7D%2Ca%5E%7B%3C2%3E%7D%2C%20...%2C%20a%5E%7B%3CT_x%3E%7D%5D%24). Then, it calls `one_step_attention()` ![ty](http://latex.codecogs.com/gif.latex?%24T_y%24) times (`for` loop). At each iteration of this loop, it gives the computed context vector ![ct](http://latex.codecogs.com/gif.latex?%24c%5E%7B%3Ct%3E%7D%24) to the second LSTM, and runs the output of the LSTM through a dense layer with softmax activation to generate a prediction ![y_hat_t](http://latex.codecogs.com/gif.latex?%5Chat%7By%7D%5E%7B%3Ct%3E%7D).
 
-
-
-**Exercise**: Implement `one_step_attention()`. The function `model()` will call the layers in `one_step_attention()` ![ty](http://latex.codecogs.com/gif.latex?%24T_y%24) using a for-loop, and it is important that all ![ty](http://latex.codecogs.com/gif.latex?%24T_y%24) copies have the same weights. I.e., it should not re-initiaiize the weights every time. In other words, all ![ty](http://latex.codecogs.com/gif.latex?%24T_y%24) steps should have shared weights. Here's how you can implement layers with shareable weights in Keras:
-1. Define the layer objects (as global variables for examples).
-2. Call these objects when propagating the input.
-
-We have defined the layers you need as global variables. Please run the following cells to create them. Please check the Keras documentation to make sure you understand what these layers are: [RepeatVector()](https://keras.io/layers/core/#repeatvector), [Concatenate()](https://keras.io/layers/merge/#concatenate), [Dense()](https://keras.io/layers/core/#dense), [Activation()](https://keras.io/layers/core/#activation), [Dot()](https://keras.io/layers/merge/#dot).
-
-Now you can use these layers to implement `one_step_attention()`. In order to propagate a Keras tensor object X through one of these layers, use `layer(X)` (or `layer([X,Y])` if it requires multiple inputs.), e.g. `densor(X)` will propagate X through the `Dense(1)` layer defined above.
-
-You will be able to check the expected output of `one_step_attention()` after you've coded the `model()` function.
-
-**Exercise**: Implement `model()` as explained in figure 2 and the text above. Again, we have defined global layers that will share weights to be used in `model()`.
-
-
-
-Now you can use these layers ![ty](http://latex.codecogs.com/gif.latex?%24T_y%24) times in a `for` loop to generate the outputs, and their parameters will not be reinitialized. You will have to carry out the following steps:
-
-1. Propagate the input into a [Bidirectional](https://keras.io/layers/wrappers/#bidirectional) [LSTM](https://keras.io/layers/recurrent/#lstm)
-2. Iterate for ![ts](http://latex.codecogs.com/gif.latex?t%20%3D%200%2C%20%5Cdots%2C%20T_%7By-1%7D):
-    1. Call `one_step_attention()` on ![alphas](http://latex.codecogs.com/gif.latex?%24%5B%5Calpha%5E%7B%3Ct%2C1%3E%7D%2C%5Calpha%5E%7B%3Ct%2C2%3E%7D%2C%20...%2C%20%5Calpha%5E%7B%3Ct%2CT_x%3E%7D%5D%24) and ![alphas](http://latex.codecogs.com/gif.latex?%24s%5E%7B%3Ct-1%3E%7D%24) to get the context vector ![alphas](http://latex.codecogs.com/gif.latex?%24context%5E%7B%3Ct%3E%7D%24).
-    2. Give ![alphas](http://latex.codecogs.com/gif.latex?%24context%5E%7B%3Ct%3E%7D%24) to the post-attention LSTM cell. Remember pass in the previous hidden-state ![alphas](http://latex.codecogs.com/gif.latex?%24s%5E%7B%5Clangle%20t-1%5Crangle%7D%24) and cell-states ![alphas](http://latex.codecogs.com/gif.latex?%24c%5E%7B%5Clangle%20t-1%5Crangle%7D%24) of this LSTM using `initial_state= [previous hidden state, previous cell state]`. Get back the new hidden state ![alphas](http://latex.codecogs.com/gif.latex?%24s%5E%7B%3Ct%3E%7D%24) and the new cell state ![ct](http://latex.codecogs.com/gif.latex?%24c%5E%7B%3Ct%3E%7D%24).
-    3. Apply a softmax layer to ![alphas](http://latex.codecogs.com/gif.latex?%24s%5E%7B%3Ct%3E%7D%24), get the output.
-    4. Save the output by adding it to the list of outputs.
-3. Create your Keras model instance, it should have three inputs ("inputs", ![alphas](http://latex.codecogs.com/gif.latex?%24s%5E%7B%3C0%3E%7D%24) and ![alphas](http://latex.codecogs.com/gif.latex?%24c%5E%7B%3C0%3E%7D%24)) and output the list of "outputs".
-
-As usual, after creating your model in Keras, you need to compile it and define what loss, optimizer and metrics your are want to use. Compile your model using `categorical_crossentropy` loss, a custom [Adam](https://keras.io/optimizers/#adam) [optimizer](https://keras.io/optimizers/#usage-of-optimizers) (`learning rate = 0.005`, ![alphas](http://latex.codecogs.com/gif.latex?%24%5Cbeta_1%20%3D%200.9%24), ![alphas](http://latex.codecogs.com/gif.latex?%24%5Cbeta_2%20%3D%200.9%24), `decay = 0.01`)  and `['accuracy']` metrics:
-
-The last step is to define all your inputs and outputs to fit the model:
-
-- You already have X of shape ![alphas](http://latex.codecogs.com/gif.latex?%24%28m%20%3D%2010000%2C%20T_x%20%3D%2030%29%24) containing the training examples.
-- You need to create `s0` and `c0` to initialize your `post_activation_LSTM_cell` with 0s.
-- Given the `model()` you coded, you need the "outputs" to be a list of 11 elements of shape (m, T_y). So that: `outputs[i][0], ..., outputs[i][Ty]` represent the true labels (characters) corresponding to the ![alphas](http://latex.codecogs.com/gif.latex?%24i%5E%7Bth%7D%24) training example (`X[i]`). More generally, `outputs[i][j]` is the true label of the ![alphas](http://latex.codecogs.com/gif.latex?%24j%5E%7Bth%7D%24) character in the ![alphas](http://latex.codecogs.com/gif.latex?%24i%5E%7Bth%7D%24) training example.
+we train the model using `categorical_crossentropy` loss, a custom [Adam](https://keras.io/optimizers/#adam) [optimizer](https://keras.io/optimizers/#usage-of-optimizers) (`learning rate = 0.005`, ![alphas](http://latex.codecogs.com/gif.latex?%24%5Cbeta_1%20%3D%200.9%24), ![alphas](http://latex.codecogs.com/gif.latex?%24%5Cbeta_2%20%3D%200.9%24), `decay = 0.01`)  and `['accuracy']` metrics:
 
 While training you can see the loss as well as the accuracy on each of the 10 positions of the output. The table below gives you an example of what the accuracies could be if the batch had 2 examples:
 
 <img src="https://raw.githubusercontent.com/00arun00/Neural_Machine_Translation/master/images/table.png" style="width:700;height:200px;"> <br>
-<caption><center>Thus, `dense_2_acc_8: 0.89` means that you are predicting the 7th character of the output correctly 89% of the time in the current batch of data. </center></caption>
 
-We have run this model for longer, and saved the weights. Run the next cell to load our weights. (By training a model for several minutes, you should be able to obtain a model of similar accuracy, but loading our model will save you time.)
+
+
+### Results in new examples
+
+```
+source: 3 May 1979
+output: 1979-05-03
+source: 5 April 09
+output: 2009-05-05
+source: 21th of August 2016
+output: 2016-08-21
+source: Tue 10 Jul 2007
+output: 2007-07-10
+source: Saturday May 9 2018
+output: 2018-05-09
+source: March 3 2001
+output: 2001-03-03
+source: March 3rd 2001
+output: 2001-03-03
+source: 1 March 2001
+output: 2001-03-01
+```
+
+```
+ 'dense_3_acc_1': [1.0],
+ 'dense_3_acc_10': [0.99970000028610229],
+ 'dense_3_acc_2': [1.0],
+ 'dense_3_acc_3': [1.0],
+ 'dense_3_acc_4': [1.0],
+ 'dense_3_acc_5': [1.0],
+ 'dense_3_acc_6': [0.99890000104904175],
+ 'dense_3_acc_7': [0.99980000019073489],
+ 'dense_3_acc_8': [1.0],
+ 'dense_3_acc_9': [0.99620000362396244],
+ 'dense_3_loss_1': [0.0014263137261150405],
+ 'dense_3_loss_10': [0.002527753144968301],
+ 'dense_3_loss_2': [0.00033948474334465572],
+ 'dense_3_loss_3': [0.00089316421450348572],
+ 'dense_3_loss_4': [0.0026649332512170077],
+ 'dense_3_loss_5': [1.8729131916188635e-05],
+ 'dense_3_loss_6': [0.005103303827054333],
+ 'dense_3_loss_7': [0.0068005907908082006],
+ 'dense_3_loss_8': [3.4973986021213933e-06],
+ 'dense_3_loss_9': [0.019907007873989642],
+ 'loss': [0.039684777855873106]
+```
+
