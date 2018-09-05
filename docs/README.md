@@ -65,7 +65,7 @@ While training you can see the loss as well as the accuracy on each of the 10 po
 
 
 
-### Results in new examples
+### Results
 
 ```
 source: 3 May 1979
