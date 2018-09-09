@@ -17,7 +17,7 @@ The model here is trained on a dataset of 10000 human readable dates and their e
 After Preprocessing our dataset is of the following format:
 
 - `X`: a processed version of the human readable dates in the training set, where each character is replaced by an index mapped to the character via `human_vocab`. Each date is further padded to ![Tx](http://latex.codecogs.com/gif.latex?T_x) values with a special character (< pad >). `X.shape = (m, Tx)`
-- `Y`: a processed version of the machine readable dates in the training set, where each character is replaced by the index it is mapped to in `machine_vocab`. You should have `Y.shape = (m, Ty)`.
+- `Y`: a processed version of the machine readable dates in the training set, where each character is replaced by the index it is mapped to in `machine_vocab`. we should have `Y.shape = (m, Ty)`.
 - `Xoh`: one-hot version of `X`, the "1" entry's index is mapped to the character thanks to `human_vocab`. `Xoh.shape = (m, Tx, len(human_vocab))`
 - `Yoh`: one-hot version of `Y`, the "1" entry's index is mapped to the character thanks to `machine_vocab`. `Yoh.shape = (m, Tx, len(machine_vocab))`. Here, `len(machine_vocab) = 11` since there are 11 characters ('-' as well as 0-9).
 
@@ -59,7 +59,7 @@ Here are some properties of the model:
 
 we train the model using `categorical_crossentropy` loss, a custom [Adam](https://keras.io/optimizers/#adam) [optimizer](https://keras.io/optimizers/#usage-of-optimizers) (`learning rate = 0.005`, ![alphas](http://latex.codecogs.com/gif.latex?%24%5Cbeta_1%20%3D%200.9%24), ![alphas](http://latex.codecogs.com/gif.latex?%24%5Cbeta_2%20%3D%200.9%24), `decay = 0.01`)  and `['accuracy']` metrics:
 
-While training you can see the loss as well as the accuracy on each of the 10 positions of the output. The table below gives you an example of what the accuracies could be if the batch had 2 examples:
+While training we can see the loss as well as the accuracy on each of the 10 positions of the output. The table below gives us an example of what the accuracies could be if the batch had 2 examples:
 
 <img src="https://raw.githubusercontent.com/00arun00/Neural_Machine_Translation/master/images/table.png" style="width:700;height:200px;"> <br>
 
