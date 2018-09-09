@@ -65,7 +65,7 @@ While training we can see the loss as well as the accuracy on each of the 10 pos
 
 
 
-### Results
+## Results
 Sample translations
 ```
 source: 3 May 1979
@@ -112,3 +112,7 @@ Losses
  'dense_3_loss_9': [0.019907007873989642],
  'loss': [0.039684777855873106]
 ```
+
+## Visualizing Attention
+
+<img src="https://raw.githubusercontent.com/00arun00/Neural_Machine_Translation/master/images/attention_map.png" style="width:500;height:436px;"> <br>

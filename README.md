@@ -1,6 +1,15 @@
 # Neural_Machine_Translation
 This project focuses on building a Neural Machine Translation (NMT) model to translate human readable dates ("25th of June, 2009") into machine readable dates ("2009-06-25"), using  attention model.
 
+** Libraries **
+- Keras
+- Faker
+- Numpy
+- Random
+- Tqdm
+- Matplotlib
+- Babel
+
 ** Project Link **      
 https://00arun00.github.io/Neural_Machine_Translation/
 
